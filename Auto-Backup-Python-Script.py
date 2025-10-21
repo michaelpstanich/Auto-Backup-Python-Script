@@ -8,7 +8,7 @@ import datetime
 
 # # # # # # # # # # # #
 # # # Develped by Michael "Spirit Shard" Stanich - michaelpstanich.com
-# # # Auto-Backup-Python-Script v0.1
+# # # Auto-Backup-Python-Script v0.2
 # # #
 # # # - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # # # !!! PLEASE BE EXTREMELY CAREFUL USING THIS SCRIPT !!!
@@ -25,17 +25,26 @@ import datetime
 # # # Below are a few parameters you should modify to fit your needs, currently they are filled out to my own personal set-up!
 # # # 
 
-# script_dir : Current working directory of the python script, so we can grab the relative folder for backup shortcuts.
+# script_dir : Current working directory of the python script, so we can grab the relative folder for backup shortcuts
 script_dir = os.path.dirname(__file__)
 
+# Follow .lnk files in the shortcuts directory to backup
+follow_shortcut = True
+
 # shortcutes_dir : Relative folder for the 'to backup' shortcuts folder
-shortcuts_dir = os.path.join(script_dir, "Backup_Shortcuts")
+shortcuts_dir = os.path.join(script_dir, "backup_links")
 
-# backup_dir : Where to copy the files to for backup. Should set this to either your backup drive or a virtual drive for cloud syncing.
-backup_dir = "./backup_dir" # Example "Q:/My Drive/Auto-Backups"
+# Follow paths found in the txt file directory to backup
+follow_textlist = True
 
-# discard_dir : Where 'discarded' files should go. Discarded files should include files removed from source but are still found in the backup, and any files from backup that are out-dated.
-discard_dir = "./discard_dir" # Example "Q:/My Drive/Auto-Backups/_Discarded_"
+# textlist_dir
+textlist_dir = os.path.join(script_dir, "backup_links")
+
+# backup_dir : Where to copy the files to for backup. Should set this to either your backup drive or a virtual drive for cloud syncing
+backup_dir = "H:/Auto-Backups" # Example "Q:/My Drive/Auto-Backups"
+
+# discard_dir : Where 'discarded' files should go. Discarded files should include files removed from source but are still found in the backup, and any files from backup that are out-dated
+discard_dir = "H:/Auto-Backups/_Discarded_" # Example "Q:/My Drive/Auto-Backups/_Discarded_"
 
 # followsymlink : Whether the backup process should follow symlinks and backup those as well, set to false by default since symlinks can be used to reference files under multiple direcotries (I use this often enough in my workflow, just remember to also backup your symlink source folders if you do as well! May also want to change to True if you are creating backups for a team so that the backup for the project contains all the needed files.)
 followsymlink = False
@@ -165,13 +174,42 @@ print("Begining Auto-backup process!")
 
 timestamp = GetCurrentTimeString()
 
-for x in glob.glob(shortcuts_dir + "\\*.lnk", recursive=True):
-    x_backuplinkname = os.path.basename(x)
-    x_shortcut = shell.CreateShortcut(x)
-    printrep_dir('Scanning and Backing up = ' + x_shortcut.Targetpath)
-    print("Following backup link and processing " + x_backuplinkname)
-    BackupDirectory(root_path=x_shortcut.Targetpath, source_path=x_shortcut.Targetpath, backup_path=os.path.join(backup_dir, x_backuplinkname.removesuffix(".lnk")))
-    printrep_files(linebreak)
+if follow_shortcut:
+    for x in glob.glob(shortcuts_dir + "/*.lnk", recursive=True):
+        x_backuplinkname = os.path.basename(x)
+        x_shortcut = shell.CreateShortcut(x)
+        printrep_dir('Scanning and Backing up = ' + x_shortcut.Targetpath)
+        print("Following backup link and processing " + x_backuplinkname)
+        BackupDirectory(root_path=x_shortcut.Targetpath, source_path=x_shortcut.Targetpath, backup_path=os.path.join(backup_dir, x_backuplinkname.removesuffix(".lnk")))
+        printrep_files(linebreak)
+    #end
 #end
+
+if follow_textlist:
+    for x in glob.glob(textlist_dir + "/*.txt", recursive=True):
+        print("Following and processing paths defined in " + os.path.basename(x))
+        with open(x) as file:
+            while line := file.readline():
+                if not line.startswith("#"):
+                    linesplit = line.split("|")
+                    x_path = linesplit[0].replace("\n", "")
+                    if not x_path == "" and os.path.exists(x_path):
+                        x_name = ""
+                        if len(linesplit) > 1:
+                            x_name = linesplit[1].replace("\n", "")
+                        #end
+                        if x_name == "":
+                            x_name = x_path.replace(":", "").replace("\\", " - ").replace("/", " - ") 
+                        #end
+                        printrep_dir("Processing path = " + x_path)
+                        BackupDirectory(root_path=x_path, source_path=x_path, backup_path=os.path.join(backup_dir, x_name))
+                        printrep_files(linebreak)
+                    #end
+                #end
+            #end
+        #end
+    #end
+#end
+
 print("Backup script complete (assuming no errors), please allow time for any cloud sync to take place before modifying backup.")
 os.system("pause")

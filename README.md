@@ -37,24 +37,26 @@ This is a simple python script I made for myself which scans a source and backup
 - Print-out (terminal) for file/directory changes
 - Easy to use (shortcut).lnk method for designating directories to update (a simpole alt+ drag into the backup_shortcuts folder and it's already set-up to backup!)
 - When using .lnk files to designate source directories, rename the shortcut to rename the name of the backup folder
+- Define folders to backup in a .txt file with a simple to read and edit format, with comments supported
 
 ### Limitations :
 
 - Has no 'undo/backtrack' functionality or any versioning, changes are one-shot and can't be undone (files should be moved into the designated discard directory before any overwrites would take place, but still take pre-cautions!)
 - Script will fail and stop if there are any issues scanning/moving/copying files (this is to prevent undefined behavior and data loss)
 - No logging or config files, everything is contained directly in the script at the moment
-- No sanity checks on configured directories, meaning common mistakes are possible
+- No sanity checks on configured directories, meaning common mistakes are possible, ensure paths are valid before running
 - Does not lock files from editing, so anything changed while the script is running but hasn't been backed up yet will reflect active changes (or may even outright fail to sync with cloud virtual drives like Google Drive)
 
 ### My Use-Case :  
 
-The reason I made this script is because auto-backup tools would run into issues with file permissions and constantly cause certain tools to break if they tried to sync while I was working. This script works around these issues by moving on a per-file basis and only ever 'reads' files in the source directory without ever tryign to 'lock' them, as well as only runs when I specifically set it to. Using .lnk files is also quick and easy to create and modify; as I often forget manual backups, this is quite easy to set-up and modify as needed. My personal use case is to have this script (optionally) backup to my local backup, then also set the backup to sync to Google Drive via the virtual drive using the desktop app.
+The reason I made this script is because auto-backup tools would run into issues with file permissions and constantly cause certain tools to break if they tried to sync while I was working. This script works around these issues by moving on a per-file basis and only ever 'reads' files in the source directory without ever trying to 'lock' them, as well as only runs when I specifically set it to. As I often forget manual backups, this is quite easy to set-up and modify as needed. My personal use case is to have this script (optionally) backup to my local backup, then also set the backup to sync to Google Drive via the virtual drive using the desktop app.
 
 ### How To Use :
 
 - First open the "Auto-Backup-Python-Script.py" file inside any text editor and configure the paths and parameters as you see fit.
-- Now place any shortcuts to the folders you wish to backup into the provided "backup_shortcuts" folder and name them whatever you want the backup folder to be.
-- Afterward you can double click the provided "RunBackup.bat" to initiate the backup via terminal. (Note : "_NoPause" versions are provided which comment out the pause function so the script runs without needing any user input after initialization. By default, the script will get the directories and print them to the console for the user to confirm before running the actual backup)
+- Inside the backup_links folder (unless changed from default), create a .txt file with the paths to backup and/or create .lnk shortcuts of folders to backup
+- Double check and manually validate all paths are valid
+- Afterward you can double click the provided "RunBackup.bat" to initiate the backup via terminal, this will copy files to the configured backup directory and move non-existing files to the configured Discard folder.
 - Wait until the script finishes, if enabled any files moved/copied will print out their source and destination
 - Once complete you can close the terminal window, if backing up to the cloud via virtual drive, please allow time for the files to properly sync before messing with files to prevent issues.
 

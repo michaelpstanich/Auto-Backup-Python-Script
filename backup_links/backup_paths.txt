@@ -1,0 +1,4 @@
+# Folders can backup using automatic names if no name is specified. Input Path|Name to designate a name for the folder instead. Empty lines and any line starting with # are skipped.
+
+# Stargeting with a # signifies a comment and the line will be skipped
+# C:/Insert/Directories/To/Backup/Here/Without/#|Optional Backup Folder Name

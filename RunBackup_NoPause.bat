@@ -1,1 +1,0 @@
-python.exe Auto-Backup-Python-Script_NoPause.py
