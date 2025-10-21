@@ -41,10 +41,10 @@ follow_textlist = True
 textlist_dir = os.path.join(script_dir, "backup_links")
 
 # backup_dir : Where to copy the files to for backup. Should set this to either your backup drive or a virtual drive for cloud syncing
-backup_dir = "H:/Auto-Backups" # Example "Q:/My Drive/Auto-Backups"
+backup_dir = "C:/Auto-Backups" # Example "Q:/My Drive/Auto-Backups"
 
 # discard_dir : Where 'discarded' files should go. Discarded files should include files removed from source but are still found in the backup, and any files from backup that are out-dated
-discard_dir = "H:/Auto-Backups/_Discarded_" # Example "Q:/My Drive/Auto-Backups/_Discarded_"
+discard_dir = "C:/Auto-Backups/_Discarded_" # Example "Q:/My Drive/Auto-Backups/_Discarded_"
 
 # followsymlink : Whether the backup process should follow symlinks and backup those as well, set to false by default since symlinks can be used to reference files under multiple direcotries (I use this often enough in my workflow, just remember to also backup your symlink source folders if you do as well! May also want to change to True if you are creating backups for a team so that the backup for the project contains all the needed files.)
 followsymlink = False
