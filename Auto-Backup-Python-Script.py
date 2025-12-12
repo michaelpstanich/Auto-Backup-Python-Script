@@ -5,10 +5,14 @@ import win32com.client # pip install pywin32
 import shutil
 import filecmp
 import datetime
+import configparser
 
+#
+# #
+# # #
 # # # # # # # # # # # #
 # # # Develped by Michael "Spirit Shard" Stanich - michaelpstanich.com
-# # # Auto-Backup-Python-Script v0.2
+# # # Auto-Backup-Python-Script v0.3
 # # #
 # # # - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # # # !!! PLEASE BE EXTREMELY CAREFUL USING THIS SCRIPT !!!
@@ -21,50 +25,65 @@ import datetime
 # # # Please be extremely careful and please vet this code before use!
 # # # (please test the script and your configuration on a simple test set-up before real files)
 # # # - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# # #
-# # # Below are a few parameters you should modify to fit your needs, currently they are filled out to my own personal set-up!
 # # # 
+# # #
+# # # !!! Do not modify below this line unless you know what you're doing !!!
+# # # # # # # # # # # #
+# # #
+# #
+#
+
+# # # Config Reading Section
 
 # script_dir : Current working directory of the python script, so we can grab the relative folder for backup shortcuts
 script_dir = os.path.dirname(__file__)
 
+# Load the config files using config parser, start with default then user overwrite ini
+config = configparser.ConfigParser()
+config.read(os.path.join(script_dir, 'default.ini'))
+config.read(os.path.join(script_dir, 'user.ini'))
+
 # Follow .lnk files in the shortcuts directory to backup
-follow_shortcut = True
+follow_shortcut = config.getboolean('Behavior', 'follow_shortcut', fallback=True)
 
 # shortcutes_dir : Relative folder for the 'to backup' shortcuts folder
-shortcuts_dir = os.path.join(script_dir, "backup_links")
+shortcuts_dir = os.path.join(script_dir, config.get('Pathing', 'shortcuts_dir', fallback="backup_links"))
+
+# textlist_dir : Relative folder for the 'to backup' text file lists
+textlist_dir = os.path.join(script_dir, config.get('Pathing', 'textlist_dir', fallback="backup_links"))
 
 # Follow paths found in the txt file directory to backup
-follow_textlist = True
-
-# textlist_dir
-textlist_dir = os.path.join(script_dir, "backup_links")
+follow_textlist = config.getboolean('Behavior', 'follow_textlist', fallback=True)
 
 # backup_dir : Where to copy the files to for backup. Should set this to either your backup drive or a virtual drive for cloud syncing
-backup_dir = "C:/Auto-Backups" # Example "Q:/My Drive/Auto-Backups"
+backup_dir = config.get('Pathing', 'backup_dir', fallback="C:/Auto-Backups")
 
 # discard_dir : Where 'discarded' files should go. Discarded files should include files removed from source but are still found in the backup, and any files from backup that are out-dated
-discard_dir = "C:/Auto-Backups/_Discarded_" # Example "Q:/My Drive/Auto-Backups/_Discarded_"
+discard_dir = config.get('Pathing', 'discard_dir', fallback="C:/Auto-Backups/_Discarded_")
 
 # followsymlink : Whether the backup process should follow symlinks and backup those as well, set to false by default since symlinks can be used to reference files under multiple direcotries (I use this often enough in my workflow, just remember to also backup your symlink source folders if you do as well! May also want to change to True if you are creating backups for a team so that the backup for the project contains all the needed files.)
-followsymlink = False
+followsymlink = config.getboolean('Behavior', 'followsymlink', fallback=False)
 
 # report_files : Whether we should print out reports on files backed up or discarded
-report_files = True
+report_files = config.getboolean('Printout', 'report_files', fallback=False)
 
 # report_dir : Whether we should report on prepared directories and what directories are being scanned
-report_dir = False
+report_dir = config.getboolean('Printout', 'report_dir', fallback=False)
 
-linebreak = " - - - - - - - - - - - - - - - - - - - - " # Style of line-break used in report print
-minbreak = " - " # Style of small line-break used in report print
+# Replaces lines of the path when auto-generating folder names from paths
+folderslashreplace = config.get('Printout', 'folderslashreplace', fallback="-")
 
-# # #
-# # # !!! Do not modify below this line unless you know what you're doing !!!
-# # # # # # # # # # # #
+# Style of line-break used in report print
+linebreak = config.get('Printout', 'linebreak', fallback="- - - - - - - - - - - - - - - - - - - -")
+
+# Style of small line-break used in report print
+minbreak = config.get('Printout', 'minbreak', fallback="-")
 
 # Get shell so we can use it for shortcut targets
 shell = win32com.client.Dispatch("WScript.shell")
 
+
+# # # Define Functions Section
 
 def printrep_files(printout=""):
     if report_files:
@@ -80,19 +99,17 @@ def printrep_dir(printout=""):
 
 def GetCurrentTimeString():
     time_now = datetime.datetime.now()
-    return (str(time_now.year) + "-" + str(time_now.month) + "-" + str(time_now.day) + "_" + str(time_now.hour) + "_" + str(time_now.minute) + "_" + str(time_now.second))
+    return ("Y"+ str(time_now.year) + "-M" + str(time_now.month) + "-D" + str(time_now.day) + "_h" + str(time_now.hour) + "_m" + str(time_now.minute) + "_s" + str(time_now.second))
 #end
 
 def BackupDirectory(root_path="", source_path="", backup_path="."):
     
     printrep_dir(minbreak)
     printrep_dir("Backing up source folder " + source_path + " into " + backup_path)
-    #printrep("root_path = "+ root_path)
-    #printrep("source_path = " + source_path)
-    #printrep("backup_path = " + backup_path)
+    # Different versions of discard path handling, you can un-comment to try them if you wish
     #discard_path = os.path.join(discard_dir, (backup_path.replace(backup_dir, "").removeprefix("\\") + "/" + timestamp))
-    discard_path = (os.path.join(os.path.join(discard_dir, timestamp), backup_path.replace(backup_dir, "").removeprefix("\\")))
-    #printrep("discard_path = " + discard_path)
+    #discard_path = (os.path.join(os.path.join(discard_dir, timestamp), backup_path.replace(backup_dir, "").removeprefix("\\")))
+    discard_path = (os.path.join(os.path.join(discard_dir, backup_path.replace(backup_dir, "").removeprefix("\\")), timestamp))
 
     if root_path == "" or not os.path.exists(root_path):
         print("Provided root path is invalid = " + root_path)
@@ -105,7 +122,9 @@ def BackupDirectory(root_path="", source_path="", backup_path="."):
     #end
 
     if not os.path.exists(backup_path):
-        print("Backup path did not exist, creating backup path = " + backup_path)
+        print("Backup path did not exist")
+        print(">>> creating backup path and backing up files")
+        print(">>> " + backup_path)
         os.makedirs(backup_path)
     #end
     
@@ -118,7 +137,9 @@ def BackupDirectory(root_path="", source_path="", backup_path="."):
         #end
         for file in dir_compare.right_only:
             file_path = os.path.join(backup_path, file)
-            printrep_files("> > > > > Discarding " + file_path + " -> " + discard_path)
+            printrep_files("Discarding File")
+            printrep_files(">>> From : "+ file_path)
+            printrep_files(">>> To   : "+ discard_path)
             shutil.move(file_path, discard_path)
         #end
     #end
@@ -127,7 +148,9 @@ def BackupDirectory(root_path="", source_path="", backup_path="."):
     for file in dir_compare.left_only:
         file_path = os.path.join(source_path, file)
         if os.path.isfile(file_path):
-            printrep_files("> > > > > Backing " + file_path + " -> " + backup_path)
+            printrep_files("Backing-Up File")
+            printrep_files(">>> From : " + file_path)
+            printrep_files(">>> To   : " + backup_path)
             shutil.copy2(file_path, backup_path, follow_symlinks=followsymlink)
         #end
     #end
@@ -141,7 +164,12 @@ def BackupDirectory(root_path="", source_path="", backup_path="."):
             file_path = os.path.join(source_path, file)
             if os.path.isfile(file_path):
                 old_backup_path = os.path.join(backup_path, file)
-                printrep_files("> > > > > Backing " + file_path + " -> " + backup_path + " (" + old_backup_path + " -> " + discard_path + ")")
+                printrep_files("Backing-Up File")
+                printrep_files(">>> From : " + file_path)
+                printrep_files(">>> To   : " + backup_path)
+                printrep_files(">>> >>> Discarding old")
+                printrep_files(">>> >>> From : " + old_backup_path)
+                printrep_files(">>> >>> To   : " + discard_path)
                 shutil.move(old_backup_path, discard_path)
                 shutil.copy2(file_path, backup_path, follow_symlinks=followsymlink)
             #end
@@ -160,8 +188,10 @@ def BackupDirectory(root_path="", source_path="", backup_path="."):
     #end
 #end
 
+
+
 # Startup Code
-printrep_files(linebreak)
+print(linebreak)
 print("Preparing Auto-Backup process!")
 print("Running from " + script_dir)
 print("Backup links folder = " + shortcuts_dir)
@@ -169,6 +199,7 @@ print("Copy folder = " + backup_dir)
 print("Discard folder = " + discard_dir)
 print(linebreak)
 os.system("pause")
+print(linebreak)
 print("Begining Auto-backup process!")
 
 
@@ -181,13 +212,14 @@ if follow_shortcut:
         printrep_dir('Scanning and Backing up = ' + x_shortcut.Targetpath)
         print("Following backup link and processing " + x_backuplinkname)
         BackupDirectory(root_path=x_shortcut.Targetpath, source_path=x_shortcut.Targetpath, backup_path=os.path.join(backup_dir, x_backuplinkname.removesuffix(".lnk")))
-        printrep_files(linebreak)
+        print(linebreak)
     #end
 #end
 
 if follow_textlist:
     for x in glob.glob(textlist_dir + "/*.txt", recursive=True):
         print("Following and processing paths defined in " + os.path.basename(x))
+        print(linebreak)
         with open(x) as file:
             while line := file.readline():
                 if not line.startswith("#"):
@@ -199,11 +231,11 @@ if follow_textlist:
                             x_name = linesplit[1].replace("\n", "")
                         #end
                         if x_name == "":
-                            x_name = x_path.replace(":", "").replace("\\", " - ").replace("/", " - ") 
+                            x_name = x_path.replace(":", "").replace("\\", folderslashreplace).replace("/", folderslashreplace) 
                         #end
                         printrep_dir("Processing path = " + x_path)
                         BackupDirectory(root_path=x_path, source_path=x_path, backup_path=os.path.join(backup_dir, x_name))
-                        printrep_files(linebreak)
+                        print(linebreak)
                     #end
                 #end
             #end
