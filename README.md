@@ -55,23 +55,44 @@ The reason I made this script is because auto-backup tools would run into issues
 
 Config settings are located inside the default.ini provided with the script, you can create your overwrites inside the user.ini file.
 
-\[Pathing\]
-shortcuts_dir : Relative folder for the 'to backup' shortcuts folder  
-textlist_dir : Relative folder for the 'to backup' text file lists  
-backup_dir : Where to copy the files to for backup. Should set this to either your backup drive or a virtual drive for cloud syncing  
-discard_dir : Where to copy the files to for backup. Should set this to either your backup drive or a virtual drive for cloud syncing
+\[Pathing\]  
+**shortcuts_dir**  
+Relative folder for the 'to backup' shortcuts folder  
 
-\[Behavior\]
-follow_shortcut : Follow .lnk files in the shortcuts directory to backup
-follow_textlist : Follow paths found in the txt file directory to backup
-followsymlink : Whether the backup process should follow symlinks and backup those as well, set to false by default since symlinks can be used to reference files under multiple direcotries (I use this often enough in my workflow, just remember to also backup your symlink source folders if you do as well! May also want to change to True if you are creating backups for a team so that the backup for the project contains all the needed files.)
-folderslashreplace : Replaces lines of the path when auto-generating folder names from paths
+**textlist_dir**  
+Relative folder for the 'to backup' text file lists  
 
-\[Printout\]
-report_files : Whether we should print out reports on files backed up or discarded
-report_dir : Whether we should report on prepared directories and what directories are being scanned
-linebreak : Style of line-break used in report print
-minbreak : Style of small line-break used in report print
+**backup_dir**  
+Where to copy the files to for backup. Should set this to either your backup drive or a virtual drive for cloud syncing  
+
+**discard_dir**  
+Where to copy the files to for backup. Should set this to either your backup drive or a virtual drive for cloud syncing
+
+\[Behavior\]  
+**follow_shortcut**  
+Follow .lnk files in the shortcuts directory to backup
+
+**follow_textlist**  
+Follow paths found in the txt file directory to backup
+
+**followsymlink**  
+Whether the backup process should follow symlinks and backup those as well, set to false by default since symlinks can be used to reference files under multiple direcotries (I use this often enough in my workflow, just remember to also backup your symlink source folders if you do as well! May also want to change to True if you are creating backups for a team so that the backup for the project contains all the needed files.)
+
+**folderslashreplace**  
+Replaces lines of the path when auto-generating folder names from paths
+
+\[Printout\]  
+**report_files**  
+Whether we should print out reports on files backed up or discarded
+
+**report_dir**  
+Whether we should report on prepared directories and what directories are being scanned
+
+**linebreak**  
+Style of line-break used in report print
+
+**minbreak**  
+Style of small line-break used in report print
 
 ### How To Use :
 
