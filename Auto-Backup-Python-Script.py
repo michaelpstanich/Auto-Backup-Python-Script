@@ -99,17 +99,19 @@ def printrep_dir(printout=""):
 
 def GetCurrentTimeString():
     time_now = datetime.datetime.now()
-    return ("Y"+ str(time_now.year) + "-M" + str(time_now.month) + "-D" + str(time_now.day) + "_h" + str(time_now.hour) + "_m" + str(time_now.minute) + "_s" + str(time_now.second))
+    #return ("Y"+ str(time_now.year) + "-M" + str(f"{time_now.month:02d}") + "-D" + str(f"{time_now.day:02d}") + "_h" + str(f"{time_now.hour:02d}") + "_m" + str(f"{time_now.minute:02d}") + "_s" + str(f"{time_now.second:02d}"))
+    return (str(time_now.year) + "-" + str(f"{time_now.month:02d}") + "-" + str(f"{time_now.day:02d}") + "_" + str(f"{time_now.hour:02d}") + "_" + str(f"{time_now.minute:02d}") + "_" + str(f"{time_now.second:02d}"))
 #end
 
-def BackupDirectory(root_path="", source_path="", backup_path="."):
+def BackupDirectory(root_path="", source_path="", backup_path=".", backup_name=""):
     
     printrep_dir(minbreak)
     printrep_dir("Backing up source folder " + source_path + " into " + backup_path)
     # Different versions of discard path handling, you can un-comment to try them if you wish
     #discard_path = os.path.join(discard_dir, (backup_path.replace(backup_dir, "").removeprefix("\\") + "/" + timestamp))
     #discard_path = (os.path.join(os.path.join(discard_dir, timestamp), backup_path.replace(backup_dir, "").removeprefix("\\")))
-    discard_path = (os.path.join(os.path.join(discard_dir, backup_path.replace(backup_dir, "").removeprefix("\\")), timestamp))
+    #discard_path = (os.path.join(os.path.join(discard_dir, backup_path.replace(backup_dir, "").removeprefix("\\")), timestamp))
+    discard_path = os.path.join(discard_dir, backup_name, timestamp, backup_path.replace(os.path.join(backup_dir, backup_name), "").removeprefix("\\"))
 
     if root_path == "" or not os.path.exists(root_path):
         print("Provided root path is invalid = " + root_path)
@@ -182,7 +184,7 @@ def BackupDirectory(root_path="", source_path="", backup_path="."):
             if entry.is_dir():
                 subdir_path = os.path.join(backup_path, os.path.basename(entry.path))
                 printrep_dir("Moving to subdirectory " + subdir_path)
-                BackupDirectory(root_path=root_path, source_path=entry.path, backup_path=subdir_path)
+                BackupDirectory(root_path=root_path, source_path=entry.path, backup_path=subdir_path, backup_name=backup_name)
             #end
         #end
     #end
@@ -211,7 +213,7 @@ if follow_shortcut:
         x_shortcut = shell.CreateShortcut(x)
         printrep_dir('Scanning and Backing up = ' + x_shortcut.Targetpath)
         print("Following backup link and processing " + x_backuplinkname)
-        BackupDirectory(root_path=x_shortcut.Targetpath, source_path=x_shortcut.Targetpath, backup_path=os.path.join(backup_dir, x_backuplinkname.removesuffix(".lnk")))
+        BackupDirectory(root_path=x_shortcut.Targetpath, source_path=x_shortcut.Targetpath, backup_path=os.path.join(backup_dir, x_backuplinkname.removesuffix(".lnk")), backup_name=x_backuplinkname.removesuffix(".lnk"))
         print(linebreak)
     #end
 #end
@@ -234,7 +236,7 @@ if follow_textlist:
                             x_name = x_path.replace(":", "").replace("\\", folderslashreplace).replace("/", folderslashreplace) 
                         #end
                         printrep_dir("Processing path = " + x_path)
-                        BackupDirectory(root_path=x_path, source_path=x_path, backup_path=os.path.join(backup_dir, x_name))
+                        BackupDirectory(root_path=x_path, source_path=x_path, backup_path=os.path.join(backup_dir, x_name), backup_name=x_name)
                         print(linebreak)
                     #end
                 #end

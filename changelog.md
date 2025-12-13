@@ -1,3 +1,8 @@
+v0.4
+- Fixed up discard paths to actually behave as defined for 0.3, discard should be backup name, then the timestamp, then folders/files
+- Date values now display with leading zeroes when only a single digit
+- Removed date Y/M/D/h/m/s as default, still commented in code if you wish to re-enable this
+
 v0.3
 - Added "folderslashreplace" config setting, sets what slashes in filepaths are replaced with when auto-generating names
 - Changed default "/" replacement to "-", removing the spaces on both sides to prevent the path increasing length
