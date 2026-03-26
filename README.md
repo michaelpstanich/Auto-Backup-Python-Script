@@ -37,10 +37,11 @@ This is a simple python script I made for myself which scans a source and backup
 - Print-out (terminal) for file/directory changes to manually track changes or report to a log when ran through another script
 - Easy to use (shortcut).lnk method for designating directories to update (a simpole alt+ drag into the backup_shortcuts folder and it's already set-up to backup!)
 - When using .lnk files to designate source directories, rename the shortcut to rename the name of the backup folder
-- Define folders to backup in a .txt file with a simple to read and edit format, with comments supported
+- Define folders to backup in a .txt file with a simple to read and edit format, with comments and 'exclude by string' supported
 
 ### Limitations :
 
+- Manually renamed backup paths should be unique so the script doesn't remove non-existing folders for mulitple paths to the same backup folder
 - Has no 'undo/backtrack' functionality or any versioning, changes are one-shot and can't be undone (files should be moved into the designated discard directory before any overwrites would take place, but still take pre-cautions!)
 - Script will fail and stop if there are any issues scanning/moving/copying files (this is to prevent undefined behavior and data loss)
 - No logging files, so changes must be tracked with an external script or manually
@@ -50,6 +51,29 @@ This is a simple python script I made for myself which scans a source and backup
 ### My Use-Case :  
 
 The reason I made this script is because auto-backup tools would run into issues with file permissions and constantly cause certain tools to break if they tried to sync while I was working. This script works around these issues by moving on a per-file basis and only ever 'reads' files in the source directory without ever trying to 'lock' them, as well as only runs when I specifically set it to. As I often forget manual backups, this is quite easy to set-up and modify as needed. My personal use case is to have this script (optionally) backup to my local backup, then also set the backup to sync to Google Drive via the virtual drive using the desktop app.
+
+### Backup file config Syntax :
+
+Verbose Example
+```
+# Comment
+No/pre-fix/is/a/path/for/backup
+++ path/for/backup
+++ path|rename backup folder
+-- ignore paths with this string - Case-Sensitive
+# Blank lines will be skipped/ignored
+```
+
+Real world example
+```
+# Work files backup
+++ C:/MyWorkspace/SoftwareDev
+-- .vs
+-- C:/MyWorkspace/SoftwareDev/MyScript/Output
+++ C:/Documents/Personal/DCIM|Family_Photos
+
+# This recursively backs up the path "C:/MyWorkspace/SoftwareDev" but ignores any paths that contain ".vs" and the entire path of "C:/MyWorkspace/SoftwareDev/MyScript/Output", also backing up, and ignoring the same strings, "C:/Documents/Personal/DCIM" but will backup to a "Family_Photos" folder instead of a folder by the source name
+```
 
 ### Configuration Options
 

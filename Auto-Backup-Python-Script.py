@@ -82,6 +82,10 @@ minbreak = config.get('Printout', 'minbreak', fallback="-")
 # Get shell so we can use it for shortcut targets
 shell = win32com.client.Dispatch("WScript.shell")
 
+# # # Paths Variables
+
+ignore_strings = []
+backup_paths = []
 
 # # # Define Functions Section
 
@@ -106,6 +110,23 @@ def GetCurrentTimeString():
 def BackupDirectory(root_path="", source_path="", backup_path=".", backup_name=""):
     
     printrep_dir(minbreak)
+
+    checkignore = source_path.replace("\\", "/")
+    if any(y in checkignore for y in ignore_strings):
+        printrep_dir("Ignoring : " + source_path)
+        if os.path.exists(backup_path):
+            foldername = source_path.split("\\").pop()
+            discard_foldpath = os.path.join(discard_dir, backup_name, timestamp, backup_path.replace(os.path.join(backup_dir, backup_name), "").removeprefix("\\")).removesuffix(foldername)
+            if not os.path.exists(discard_foldpath):
+                os.makedirs(discard_foldpath)
+            #end
+            printrep_files("Discarding ignored path")
+            printrep_files(">>> From : "+ backup_path)
+            printrep_files(">>> To   : "+ discard_foldpath)
+            shutil.move(backup_path, discard_foldpath)
+        return
+    #end
+    
     printrep_dir("Backing up source folder " + source_path + " into " + backup_path)
     # Different versions of discard path handling, you can un-comment to try them if you wish
     #discard_path = os.path.join(discard_dir, (backup_path.replace(backup_dir, "").removeprefix("\\") + "/" + timestamp))
@@ -113,6 +134,7 @@ def BackupDirectory(root_path="", source_path="", backup_path=".", backup_name="
     #discard_path = (os.path.join(os.path.join(discard_dir, backup_path.replace(backup_dir, "").removeprefix("\\")), timestamp))
     discard_path = os.path.join(discard_dir, backup_name, timestamp, backup_path.replace(os.path.join(backup_dir, backup_name), "").removeprefix("\\"))
 
+    
     if root_path == "" or not os.path.exists(root_path):
         print("Provided root path is invalid = " + root_path)
         return
@@ -149,7 +171,10 @@ def BackupDirectory(root_path="", source_path="", backup_path=".", backup_name="
     # Backup any files that are only in the source directory
     for file in dir_compare.left_only:
         file_path = os.path.join(source_path, file)
-        if os.path.isfile(file_path):
+        checkignore = file_path.replace("\\", "/")
+        if any(y in checkignore for y in ignore_strings):
+            printrep_files("Ignoring : " + file_path)
+        elif os.path.isfile(file_path):
             printrep_files("Backing-Up File")
             printrep_files(">>> From : " + file_path)
             printrep_files(">>> To   : " + backup_path)
@@ -164,8 +189,14 @@ def BackupDirectory(root_path="", source_path="", backup_path=".", backup_name="
         #end
         for file in dir_compare.diff_files:
             file_path = os.path.join(source_path, file)
-            if os.path.isfile(file_path):
-                old_backup_path = os.path.join(backup_path, file)
+            old_backup_path = os.path.join(backup_path, file)
+            checkignore = file_path.replace("\\", "/")
+            if any(y in checkignore for y in ignore_strings):
+                printrep_files("Discarding old and ignored")
+                printrep_files(">>> From : " + old_backup_path)
+                printrep_files(">>> To   : " + discard_path)
+                shutil.move(old_backup_path, discard_path)
+            elif os.path.isfile(file_path):
                 printrep_files("Backing-Up File")
                 printrep_files(">>> From : " + file_path)
                 printrep_files(">>> To   : " + backup_path)
@@ -174,6 +205,25 @@ def BackupDirectory(root_path="", source_path="", backup_path=".", backup_name="
                 printrep_files(">>> >>> To   : " + discard_path)
                 shutil.move(old_backup_path, discard_path)
                 shutil.copy2(file_path, backup_path, follow_symlinks=followsymlink)
+            #end
+        #end
+    #end
+    
+    # For files same in both remove any ignored backup files
+    if len(dir_compare.same_files) > 0:
+        for file in dir_compare.same_files:
+            file_path = os.path.join(source_path, file)
+            old_backup_path = os.path.join(backup_path, file)
+            checkignore = file_path.replace("\\", "/")
+            if any(y in checkignore for y in ignore_strings):
+                if not os.path.exists(discard_path):
+                    os.makedirs(discard_path)
+                #end
+                printrep_files("Ignoring : " + file_path)
+                printrep_files(">>> >>> Discarding old")
+                printrep_files(">>> >>> From : " + old_backup_path)
+                printrep_files(">>> >>> To   : " + discard_path)
+                shutil.move(old_backup_path, discard_path)
             #end
         #end
     #end
@@ -190,9 +240,32 @@ def BackupDirectory(root_path="", source_path="", backup_path=".", backup_name="
     #end
 #end
 
+# Take whatever ignores and paths we currently have and back them up
+def PrepAndBackupPaths():
+    for x in backup_paths:
+        if x != "":
+            linesplit = x.split("|")
+            x_path = linesplit[0].replace("\n", "")
+            if not x_path == "" and os.path.exists(x_path):
+                x_name = ""
+                if len(linesplit) > 1:
+                    x_name = linesplit[1].replace("\n", "")
+                #end
+                if x_name == "":
+                    x_name = x_path.replace(":", "").replace("\\", folderslashreplace).replace("/", folderslashreplace) 
+                #end    
+                printrep_dir("Processing path = " + x_path)
+                BackupDirectory(root_path=x_path, source_path=x_path, backup_path=os.path.join(backup_dir, x_name), backup_name=x_name)
+                print(linebreak)
+            #end
+        #end
+    #end
+    # Clear arrays as we're now done with them
+    ignore_strings.clear()
+    backup_paths.clear()
+#end
 
-
-# Startup Code
+# # # Startup Code
 print(linebreak)
 print("Preparing Auto-Backup process!")
 print("Running from " + script_dir)
@@ -204,10 +277,13 @@ os.system("pause")
 print(linebreak)
 print("Begining Auto-backup process!")
 
-
+# Create time string for discard path
 timestamp = GetCurrentTimeString()
 
+
 if follow_shortcut:
+    print(linebreak)
+    print("Getting shortcut-based paths")
     for x in glob.glob(shortcuts_dir + "/*.lnk", recursive=True):
         x_backuplinkname = os.path.basename(x)
         x_shortcut = shell.CreateShortcut(x)
@@ -219,29 +295,35 @@ if follow_shortcut:
 #end
 
 if follow_textlist:
+    print(linebreak)
     for x in glob.glob(textlist_dir + "/*.txt", recursive=True):
         print("Following and processing paths defined in " + os.path.basename(x))
         print(linebreak)
         with open(x) as file:
             while line := file.readline():
                 if not line.startswith("#"):
-                    linesplit = line.split("|")
-                    x_path = linesplit[0].replace("\n", "")
-                    if not x_path == "" and os.path.exists(x_path):
-                        x_name = ""
-                        if len(linesplit) > 1:
-                            x_name = linesplit[1].replace("\n", "")
+                    if line.startswith("-- ") or line.startswith("--"):
+                        sendline = line.removeprefix("-- ").removeprefix("--").replace("\\", "/").replace("\n", "")
+                        if not sendline == "":
+                            print("Added ignore_string : " + sendline)
+                            ignore_strings.append(sendline)
+                    elif line.startswith("++ ") or line.startswith("++"):
+                        sendline = line.removeprefix("++ ").removeprefix("++").replace("\\", "/").replace("\n", "")
+                        if not sendline == "":
+                            backup_paths.append(sendline)
+                            print("Added backup_path : " + sendline)
+                    elif not line.startswith("#"):
+                        sendline = line.replace("\\", "/").replace("\n", "")
+                        if not sendline == "":
+                            backup_paths.append(sendline)
+                            print("Added backup_path : " + sendline)
                         #end
-                        if x_name == "":
-                            x_name = x_path.replace(":", "").replace("\\", folderslashreplace).replace("/", folderslashreplace) 
-                        #end
-                        printrep_dir("Processing path = " + x_path)
-                        BackupDirectory(root_path=x_path, source_path=x_path, backup_path=os.path.join(backup_dir, x_name), backup_name=x_name)
-                        print(linebreak)
                     #end
                 #end
             #end
         #end
+        print("Running backup")
+        PrepAndBackupPaths()
     #end
 #end
 

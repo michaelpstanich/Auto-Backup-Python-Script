@@ -1,3 +1,11 @@
+v0.5
+- When getting paths from files, gathers all paths from a file then processes them before moving to the next file
+- Added "add ignore_string" and "Add backup_path" feature using prefixes
+- - To ignore a string, prefix a line with "-- ", any path containing this string will be ignored
+- - To add a backup path explicitly, prefix a line with "++ ", behaves just like no special prefix but can help with read-ability
+- - ignore_string and backup_path will only apply for the file it is contained within, so different files can have different setups
+- - files which were backed up but become ignored will be moved to discard
+
 v0.4
 - Fixed up discard paths to actually behave as defined for 0.3, discard should be backup name, then the timestamp, then folders/files
 - Date values now display with leading zeroes when only a single digit
